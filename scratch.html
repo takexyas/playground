@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Scratch</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+        <style>
+body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: white;
+}
+#canvas {
+    display: flex;
+}
+.graphic {
+    position: absolute;
+    display: flex;
+    z-index: -5;
+    background-color: transparent;
+}
+        </style>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <span class="graphic">
+            <i class="fa-solid fa-poo"></i>
+        </span>
+    </body>
+    <script>
+    // キャンバスが使えないブラウザの場合
+    if (!canvas.getContext) {
+        throw new Error('canvas getContext error');
+    }
+    // キャンバスのコンテキスト
+    const context = canvas.getContext('2d');
+    // クリックの状態(0:なし, 1:クリック, 2:ドラッグ)
+    let clickState = 0;
+    // ライン幅の割合
+    const lineWidthRate = 0.1;
+    // フォント
+    const fontFamily = 'Impact';
+
+    // 初期化
+    function init() {
+        // body全体の表示領域を取得
+        let body = document.querySelector('body');
+        let displayWidth = Math.min(body.clientWidth, body.clientHeight);
+        // キャンバスサイズの設定(キャンバスサイズと表示サイズを合わせる)
+        canvas.setAttribute("width", displayWidth);
+        canvas.setAttribute("height", displayWidth);
+        // 画像を中央に設定
+        let graphic = document.querySelector('.graphic');
+        graphic.style.top = (displayWidth / 4) + 'px';
+        graphic.style.left = (displayWidth / 4) + 'px';
+        graphic.style.fontSize = (displayWidth / 2) + 'px';
+        // 色設定
+        let rgb = '#'
+                + padding(irand(256).toString(16), 2)
+                + padding(irand(256).toString(16), 2)
+                + padding(irand(256).toString(16), 2);
+        graphic.style.color = rgb;
+        // アクション設定
+        setAction();
+        // ラインの設定
+        context.lineWidth = displayWidth * lineWidthRate;
+        context.lineCap = 'round';
+    }
+    // アクション設定
+    function setAction() {
+        const target = document.querySelector('.graphic i');
+        const action = ['', 'fa-beat', 'fa-beat-fade', 'fa-bounce', 'fa-fade', 'fa-flip', 'fa-shake', 'fa-spin'];
+        let rand = irand(action.length);
+        if (rand) {
+            target.classList.toggle(action[rand]);
+        }
+    }
+    // 整数ランダム
+    function irand(num) {
+        return Math.floor(Math.random() * num);
+    }
+    // 0埋め
+    function padding(num, digit) {
+        let len = String(num).length;
+        if (len >= digit) {
+            return (String(num));
+        }
+        pad = ('0'.repeat(digit - len) + String(num)).slice(-1 * digit);
+        return pad;
+    }
+    // イベントの設定
+    function handleEnd(evt) {
+        context.globalCompositeOperation = 'source-over';
+        clickState = 0;
+    }
+    function handleStart(evt) {
+        context.globalCompositeOperation = 'destination-out';
+        clickState = 1;
+    }
+    function handleMove(evt) {
+        let x = evt.clientX;
+        let y = evt.clientY;
+        // マウスイベントで取得されるカーソル座標パラメータの整理(offset, page, screen, client)
+        // https://qiita.com/yukiB/items/31a9e9e600dfb1f34f76
+        // スマホの場合
+        if (evt.changedTouches) {
+            // スマホでは移動しないように設定
+            evt.preventDefault();
+            // 最初のタッチを取得
+            x = evt.changedTouches[0].clientX;
+            y = evt.changedTouches[0].clientY;
+        }
+        if (clickState === 1) {
+            context.beginPath();
+            context.moveTo(x, y);
+            clickState = 2;
+        } else if (clickState === 2) {
+            context.lineTo(x, y);
+            context.stroke();
+        }
+    }
+    function event() {
+        // https://developer.mozilla.org/ja/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('touchstart', handleStart);
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchend', handleEnd);
+        canvas.addEventListener('mousemove', handleMove);
+        canvas.addEventListener('touchmove', handleMove);
+    }
+    // 円を描く
+    function drawCircle() {
+        const centerX = canvas.clientWidth / 2;
+        const centerY = canvas.clientHeight / 2;
+        const r = Math.min(canvas.clientWidth, canvas.clientHeight) / 2;
+        const startAngle = 0 * Math.PI / 180;
+        const endAngle = 360 * Math.PI / 180;
+        const bCounterClockwise = false;
+        context.arc(centerX, centerY, r, startAngle, endAngle, bCounterClockwise);
+        context.fillStyle = 'gray';
+        context.fill();
+    }
+    // 文字を書く
+    function drawText() {
+        const strText = 'SCRATCH!';
+        const fontSize = Math.floor(canvas.clientWidth / strText.length);
+        context.font = fontSize + "px " + fontFamily;
+        const textLength = context.measureText(strText);
+        context.fillStyle = 'black';
+        context.fillText(
+            strText,
+            (canvas.clientWidth - textLength.width) / 2,
+            (canvas.clientHeight + fontSize) / 2);
+    }
+    // メイン
+    function main() {
+        // キャンバスサイズと表示サイズは異なるので注意
+        // https://note.affi-sapo-sv.com/js-canvas-size.php
+        // 初期化
+        init();
+        // イベント設定
+        event();
+        // 円を描く
+        drawCircle();
+        // 文字を書く
+        drawText();
+    };
+
+    // 実行開始
+    window.addEventListener('load', main, false);
+    </script>
+</html>
